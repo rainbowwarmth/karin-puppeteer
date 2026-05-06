@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 import { Action } from '@/types/client'
 import { screenshot } from '@/puppeteer'
-import { common, config, logger } from '@/utils'
+import { common, config, logger, addStats } from '@/utils'
 import { wsErrRes, wsSuccRes } from '@/utils/response'
 
 /**
@@ -30,6 +30,15 @@ export const Client = (url: string) => {
         try {
           const start = Date.now()
           const result = await screenshot(data)
+
+          let outputSize = 0
+          if (Buffer.isBuffer(result)) {
+            outputSize = result.length
+          } else if (typeof result === 'string') {
+            outputSize = Buffer.from(result, 'base64').length
+          }
+          const inputSize = Buffer.from(JSON.stringify(data)).length
+          await addStats(inputSize, outputSize, Date.now() - start)
 
           wsSuccRes(client, echo, result, data.encoding, data.multiPage)
           return common.log(result, data.file, start)

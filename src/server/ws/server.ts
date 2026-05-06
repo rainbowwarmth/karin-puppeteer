@@ -6,7 +6,7 @@ import { WebSocketServer } from 'ws'
 import { screenshot } from '@/puppeteer'
 import { Action } from '@/types/client'
 import { lookup } from 'mime-types'
-import { common, config, logger } from '@/utils'
+import { common, config, logger, addStats } from '@/utils'
 import { wsErrRes, wsSuccRes } from '@/utils/response'
 import { cacheHtml, delHtml, getHtml } from './static'
 import Puppeteer, { common as Common } from '@karinjs/puppeteer-core'
@@ -118,18 +118,38 @@ export const Server = () => {
     // 判断是否为127.0.0.1的ip
     const render = (origin === 'local')
       /** 本地ip */
-      ? async (data: any) => {
+      ? async (data: any, start: number) => {
         const result = await screenshot(data)
+
+        let outputSize = 0
+        if (Buffer.isBuffer(result)) {
+          outputSize = result.length
+        } else if (typeof result === 'string') {
+          outputSize = Buffer.from(result, 'base64').length
+        }
+        const inputSize = Buffer.from(JSON.stringify(data)).length
+        await addStats(inputSize, outputSize, Date.now() - start)
+
         return result
       }
       /** 强制性等待并且劫持请求通过ws进行交互 */
-      : async (data: any) => {
+      : async (data: any, start: number) => {
         const html = cacheHtml(data.file)
         data.file = html
         data.pageGotoParams = data.pageGotoParams || {}
         data.pageGotoParams.waitUntil = 'networkidle2'
         const result = await screenshot({ ...data, setRequestInterception })
         delHtml(html)
+
+        let outputSize = 0
+        if (Buffer.isBuffer(result)) {
+          outputSize = result.length
+        } else if (typeof result === 'string') {
+          outputSize = Buffer.from(result, 'base64').length
+        }
+        const inputSize = Buffer.from(JSON.stringify(data)).length
+        await addStats(inputSize, outputSize, Date.now() - start)
+
         return result
       }
 
@@ -150,11 +170,21 @@ export const Server = () => {
             /** http */
             if (data.file.startsWith('http')) {
               const result = await screenshot(data)
+
+              let outputSize = 0
+              if (Buffer.isBuffer(result)) {
+                outputSize = result.length
+              } else if (typeof result === 'string') {
+                outputSize = Buffer.from(result, 'base64').length
+              }
+              const inputSize = Buffer.from(JSON.stringify(data)).length
+              await addStats(inputSize, outputSize, Date.now() - start)
+
               wsSuccRes(server, echo, result, data.encoding, data.multiPage)
               return common.log(result, data.file, start)
             }
 
-            const result = await render(data)
+            const result = await render(data, start)
             wsSuccRes(server, echo, result, data.encoding, data.multiPage)
             return common.log(result, data.file, start)
           } catch (error) {

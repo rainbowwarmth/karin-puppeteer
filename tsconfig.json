@@ -9,9 +9,13 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
-    "types": ["@types/node"],
+    "types": [
+      "@types/node"
+    ],
     "rootDir": "./src",
     "declaration": true,
     "noImplicitAny": true,
@@ -21,6 +25,10 @@
     "resolveFullPaths": true,
     "resolveFullExtension": ".js"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -9,6 +9,7 @@ export * from './api/ping'
 export * from './api/static'
 export * from './http/server'
 export * from './api/hex'
+export * from './api/status'
 export * from './http/render'
 
 init(config.http.port, config.http.host)

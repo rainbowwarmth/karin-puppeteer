@@ -1,5 +1,5 @@
 import { app } from '../express'
-import { common, logger } from '@/utils'
+import { common, logger, addStats } from '@/utils'
 import { screenshot } from '@/puppeteer'
 import { dealTpl } from './template'
 import { httpErrRes, httpSuccRes } from '@/utils/response'
@@ -20,6 +20,17 @@ app.post('/render', async (req, res) => {
 
     const start = Date.now()
     const data = await screenshot(options)
+
+    let outputSize = 0
+    if (Buffer.isBuffer(data)) {
+      outputSize = data.length
+    } else if (typeof data === 'string') {
+      outputSize = Buffer.from(data, 'base64').length
+    }
+
+    const inputSize = Buffer.from(JSON.stringify(req.body)).length
+    await addStats(inputSize, outputSize, Date.now() - start)
+
     httpSuccRes(res, data, options.encoding, options.multiPage)
 
     return common.log(data, options.srcFile, start)
@@ -64,6 +75,10 @@ app.post('/render/html', async (req, res) => {
       // 其他情况，强制转换
       imageBuffer = Buffer.from(data as any)
     }
+
+    const outputSize = imageBuffer.length
+    const inputSize = Buffer.from(req.body.html).length
+    await addStats(inputSize, outputSize, Date.now() - start)
 
     res.status(200).send(imageBuffer)
 

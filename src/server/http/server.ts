@@ -1,5 +1,5 @@
 import { app } from '../express'
-import { common, logger } from '@/utils'
+import { common, logger, addStats } from '@/utils'
 import { screenshot } from '@/puppeteer'
 import { httpErrRes, httpSuccRes } from '@/utils/response'
 
@@ -25,6 +25,15 @@ app.get('/puppeteer/', async (req, res) => {
       }
     })
 
+    let outputSize = 0
+    if (Buffer.isBuffer(data)) {
+      outputSize = data.length
+    } else if (typeof data === 'string') {
+      outputSize = Buffer.from(data, 'base64').length
+    }
+    const inputSize = Buffer.from(file).length
+    await addStats(inputSize, outputSize, Date.now() - start)
+
     httpSuccRes(res, data, 'binary', false)
     return common.log(data, file, start)
   } catch (error: any) {
@@ -40,6 +49,15 @@ app.post('/puppeteer', async (req, res) => {
   try {
     const start = Date.now()
     const data = await screenshot(req.body)
+
+    let outputSize = 0
+    if (Buffer.isBuffer(data)) {
+      outputSize = data.length
+    } else if (typeof data === 'string') {
+      outputSize = Buffer.from(data, 'base64').length
+    }
+    const inputSize = Buffer.from(JSON.stringify(req.body)).length
+    await addStats(inputSize, outputSize, Date.now() - start)
 
     httpSuccRes(res, data, req.body.encoding, req.body.multiPage)
     return common.log(data, req.body.file, start)
