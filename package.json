@@ -1,58 +1,23 @@
 {
-  "name": "@karinjs/plugin-puppeteer",
-  "version": "2.3.1",
-  "description": "karin 的 puppeteer 截图、渲染插件",
-  "keywords": [
-    "karin",
-    "node-karin",
-    "karin-plugin",
-    "puppeteer",
-    "browser",
-    "headless"
-  ],
-  "license": "MIT",
-  "author": "sj817",
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/KarinJS/puppeteer.git"
-  },
+  "name": "@karinjs/puppeteer-repo",
+  "version": "1.6.0",
   "scripts": {
-    "build": "tsc && tsup",
-    "dev": "tsx src/app.ts",
-    "dev:test": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "pub": "pnpm publish --access public",
-    "rm": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
-    "lint": "eslint src/",
-    "sync": "curl -X PUT \"https://registry-direct.npmmirror.com/-/package/@karinjs/plugin-puppeteer/syncs\""
-  },
-  "dependencies": {
-    "@snapka/puppeteer": "0.2.7"
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "pub": "pnpm -r pub",
+    "app": "node packages/puppeteer/lib/index.js"
   },
   "devDependencies": {
-    "@types/node": "^22.19.15",
-    "eslint": "10.1.0",
-    "neostandard": "0.13.0",
-    "node-karin": "^1.15.1",
-    "tsup": "^8.5.1",
-    "typescript": "6.0.2",
-    "vitest": "^4.1.2"
-  },
-  "karin": {
-    "main": "src/index.ts",
-    "apps": [],
-    "web": "dist/web.config.js",
-    "ts-web": "src/web.config.ts",
-    "files": [
-      "config"
-    ]
+    "@types/decompress": "^4.2.7",
+    "@types/express": "^4.17.21",
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^22.5.4",
+    "@types/progress": "^2.0.7",
+    "@types/ws": "^8.5.12",
+    "eslint": "latest",
+    "neostandard": "latest",
+    "sort-package-json": "2.10.0",
+    "tsc-alias": "1.8.10",
+    "typescript": "5.4.5"
   }
 }

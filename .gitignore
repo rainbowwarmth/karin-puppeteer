@@ -1,10 +1,10 @@
 node_modules/
 logs/
 lib/
-dist/
 config.json
 count.json
 yarn.lock
+pnpm-lock.yaml
 package-lock.json
 
 npm-debug.log*
@@ -12,14 +12,14 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-
 test.js
 *.png
 data
-/index.js
-/pm2.json
+*.html
+index.js
+pm2.json
 1.js
 2.js
-
-.env
-/@karinjs
+render-ws (1).js
+正向ws.js
+正向渲染.js
