@@ -230,4 +230,41 @@ export const getDailyStats = (days: number = 30) => {
   })
 }
 
+export const getStatsByDate = (date: string) => {
+  return new Promise<{ count: number; totalInputSize: number; totalOutputSize: number; totalRenderTime: number; avgRenderTime: number }>((resolve, reject) => {
+    db.get(
+      `SELECT 
+        COALESCE(SUM(count), 0) as count,
+        COALESCE(SUM(total_input_size), 0) as totalInputSize,
+        COALESCE(SUM(total_output_size), 0) as totalOutputSize,
+        COALESCE(SUM(total_render_time), 0) as totalRenderTime,
+        COALESCE(AVG(avg_render_time), 0) as avgRenderTime
+      FROM (
+        SELECT count, total_input_size, total_output_size, total_render_time, avg_render_time 
+        FROM daily_stats 
+        WHERE date = ?
+        UNION ALL
+        SELECT COUNT(*) as count, SUM(input_size) as total_input_size, SUM(output_size) as total_output_size, SUM(render_time) as total_render_time, AVG(render_time) as avg_render_time 
+        FROM screenshot_stats 
+        WHERE DATE(timestamp) = ?
+      ) AS combined`,
+      [date, date],
+      (err, row: any) => {
+        if (err) {
+          logger.error('[数据库] 获取指定日期统计失败:', err.message)
+          reject(err)
+        } else {
+          resolve({
+            count: row?.count || 0,
+            totalInputSize: row?.totalInputSize || 0,
+            totalOutputSize: row?.totalOutputSize || 0,
+            totalRenderTime: row?.totalRenderTime || 0,
+            avgRenderTime: Math.round(row?.avgRenderTime || 0)
+          })
+        }
+      }
+    )
+  })
+}
+
 export default db

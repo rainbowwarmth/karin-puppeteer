@@ -257,6 +257,109 @@ Invoke-RestMethod -Uri "http://127.0.0.1:7005/render/html" -Method Post -Content
 }
 ```
 
+### 2.7 渲染统计(GET)
+
+请求地址: `http://127.0.0.1:7005/status`
+
+**查询参数:**
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `time` | string | 否 | 指定日期，格式为 `YYYY-MM-DD`，不指定则默认查询今日 |
+
+**数据来源说明:**
+
+| 查询方式 | 数据来源 | 说明 |
+| --- | --- | --- |
+| 不指定日期 | screenshot_stats | 实时获取今日统计 |
+| 指定日期为今天 | screenshot_stats | 实时获取今日统计 |
+| 指定其他日期 | daily_stats | 获取历史合并数据 |
+
+**响应字段说明:**
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `all` | object | 累计渲染统计 |
+| `all.count` | number | 累计截图次数 |
+| `all.totalInputSize` | number | 累计输入大小(字节) |
+| `all.totalInputSizeFormatted` | string | 累计输入大小(格式化) |
+| `all.totalOutputSize` | number | 累计输出大小(字节) |
+| `all.totalOutputSizeFormatted` | string | 累计输出大小(格式化) |
+| `all.totalRenderTime` | number | 累计渲染耗时(ms) |
+| `all.totalRenderTimeFormatted` | string | 累计渲染耗时(格式化) |
+| `all.avgRenderTime` | number | 平均渲染耗时(ms) |
+| `all.avgRenderTimeFormatted` | string | 平均渲染耗时(格式化) |
+| `today` | object | 今日/指定日期统计，字段同上 |
+| `date` | string | 当使用 time 参数时返回，标识查询的日期 |
+
+**请求示例:**
+
+```bash
+# 查询今日统计
+curl http://127.0.0.1:7005/status
+
+# 查询指定日期统计
+curl http://127.0.0.1:7005/status?time=2026-05-06
+```
+
+**响应示例:**
+
+```json
+{
+  "status": 200,
+  "data": {
+    "all": {
+      "count": 150,
+      "totalInputSize": 75000,
+      "totalInputSizeFormatted": "73.24 KB",
+      "totalOutputSize": 2250000,
+      "totalOutputSizeFormatted": "2.15 MB",
+      "totalRenderTime": 90000,
+      "totalRenderTimeFormatted": "90s",
+      "avgRenderTime": 600,
+      "avgRenderTimeFormatted": "600ms"
+    },
+    "today": {
+      "count": 10,
+      "totalInputSize": 5000,
+      "totalInputSizeFormatted": "4.88 KB",
+      "totalOutputSize": 150000,
+      "totalOutputSizeFormatted": "146.48 KB",
+      "totalRenderTime": 6000,
+      "totalRenderTimeFormatted": "6s",
+      "avgRenderTime": 600,
+      "avgRenderTimeFormatted": "600ms"
+    }
+  }
+}
+```
+
+**指定日期响应:**
+
+```json
+{
+  "status": 200,
+  "data": {
+    "all": {
+      "count": 150,
+      ...
+    },
+    "date": "2026-05-06",
+    "today": {
+      "count": 25,
+      "totalInputSize": 12500,
+      "totalInputSizeFormatted": "12.21 KB",
+      "totalOutputSize": 375000,
+      "totalOutputSizeFormatted": "366.21 KB",
+      "totalRenderTime": 15000,
+      "totalRenderTimeFormatted": "15s",
+      "avgRenderTime": 600,
+      "avgRenderTimeFormatted": "600ms"
+    }
+  }
+}
+```
+
 ## 启动
 
 ```bash

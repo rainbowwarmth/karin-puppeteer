@@ -36,7 +36,12 @@
     "postinstall": "node init.js",
     "pub": "pnpm publish --access public",
     "sync": "curl -X PUT \"https://registry-direct.npmmirror.com/-/package/@karinjs/puppeteer/syncs\"",
-    "sort": "npx sort-package-json"
+    "sort": "npx sort-package-json",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "pm2 start pm2.json",
+    "stop": "pm2 stop pm2.json",
+    "restart": "pm2 restart pm2.json",
+    "log": "pm2 log --lines 100"
   },
   "dependencies": {
     "@karinjs/puppeteer-core": "1.6.1",
