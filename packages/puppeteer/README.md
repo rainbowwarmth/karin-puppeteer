@@ -93,7 +93,80 @@ curl http://127.0.0.1:7005/puppeteer?auth=123456&file=http://www.baidu.com
 }
 ```
 
-### 2.5 模板渲染(POST)
+### 2.5 HTML 直接渲染(POST)
+
+请求地址: `http://127.0.0.1:7005/render/html`  
+请求方式: `POST`  
+返回格式: `image/jpeg` 或 `image/png` 二进制图片
+
+直接传入 HTML 字符串进行截图，无需本地文件。
+
+**请求参数:**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `html` | string | 是 | - | HTML 字符串内容 |
+| `type` | string | 否 | `jpeg` | 图片类型，可选 `jpeg` 或 `png` |
+| `quality` | number | 否 | `80` | 图片质量，0-100（png 格式不支持） |
+| `selector` | string | 否 | `.container` | 截图选择器，默认为 .container 元素 |
+| `setViewport` | object | 否 | - | 视口设置对象 |
+| `setViewport.width` | number | 否 | - | 视口宽度 |
+| `setViewport.height` | number | 否 | - | 视口高度 |
+| `setViewport.deviceScaleFactor` | number | 否 | - | 设备像素比 |
+| `waitUntil` | string | 否 | `load` | 页面加载完成条件 |
+| `timeout` | number | 否 | `30000` | 超时时间(ms) |
+
+**请求示例:**
+
+```bash
+# Bash curl 示例
+curl -X POST http://127.0.0.1:7005/render/html \
+  -H "Content-Type: application/json" \
+  -d '{
+    "html": "<html><body><div class=\"container\"><h1>Hello World</h1></div></body></html>",
+    "type": "jpeg",
+    "quality": 80,
+    "setViewport": {
+      "width": 1200,
+      "height": 800,
+      "deviceScaleFactor": 2
+    }
+  }' --output output.jpg
+```
+
+```powershell
+# PowerShell 示例
+$body = @{
+    html = '<html><body><div class="container"><h1>Hello World</h1></div></body></html>'
+    type = "jpeg"
+    quality = 80
+    setViewport = @{
+        width = 1200
+        height = 800
+        deviceScaleFactor = 2
+    }
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://127.0.0.1:7005/render/html" -Method Post -ContentType "application/json" -Body $body -OutFile "output.jpg"
+```
+
+**错误响应:**
+
+```json
+{
+  "error": "HTML content is required",
+  "message": "无效的html"
+}
+```
+
+```json
+{
+  "error": "Render failed",
+  "message": "具体错误信息"
+}
+```
+
+### 2.6 模板渲染(POST)
 
 请求地址: `http://127.0.0.1:7005/render`
 
