@@ -15,7 +15,7 @@ const formatDuration = (ms: number): string => {
   return (ms / 1000).toFixed(2) + 's'
 }
 
-app.get('/status', async (req, res) => {
+const getStats = async (req: any, res: any) => {
   try {
     const { time } = req.query
     const all = await getAllStats()
@@ -83,4 +83,7 @@ app.get('/status', async (req, res) => {
   } catch (error: any) {
     res.status(500).send({ status: 500, message: error.message || '获取统计数据失败' })
   }
-})
+}
+
+app.get('/status', getStats)
+app.get('/stats', getStats)

@@ -76,15 +76,17 @@ export const addStats = (inputSize: number, outputSize: number, renderTime: numb
 
 export const getTodayStats = () => {
   return new Promise<{ count: number; totalInputSize: number; totalOutputSize: number; totalRenderTime: number; avgRenderTime: number }>((resolve, reject) => {
+    const todayStr = new Date().toISOString().split('T')[0]
     db.get(
-      `SELECT 
+      `SELECT
         COUNT(*) as count,
         COALESCE(SUM(input_size), 0) as totalInputSize,
         COALESCE(SUM(output_size), 0) as totalOutputSize,
         COALESCE(SUM(render_time), 0) as totalRenderTime,
         COALESCE(AVG(render_time), 0) as avgRenderTime
       FROM screenshot_stats
-      WHERE DATE(timestamp) = DATE('now', 'localtime')`,
+      WHERE DATE(timestamp) = ?`,
+      [todayStr],
       (err, row: any) => {
         if (err) {
           logger.error('[数据库] 获取今日统计失败:', err.message)
@@ -137,15 +139,22 @@ export const getAllStats = () => {
 
 const mergeYesterdayStats = () => {
   return new Promise<void>((resolve, reject) => {
+    const now = new Date()
+    const yesterday = new Date(now)
+    yesterday.setDate(yesterday.getDate() - 1)
+    yesterday.setHours(0, 0, 0, 0)
+    const yesterdayDateStr = yesterday.toISOString().split('T')[0]
+
     db.get(
-      `SELECT 
+      `SELECT
         COUNT(*) as count,
         COALESCE(SUM(input_size), 0) as total_input_size,
         COALESCE(SUM(output_size), 0) as total_output_size,
         COALESCE(SUM(render_time), 0) as total_render_time,
         COALESCE(AVG(render_time), 0) as avg_render_time
       FROM screenshot_stats
-      WHERE DATE(timestamp) = DATE('now', 'localtime', '-1 day')`,
+      WHERE DATE(timestamp) = ?`,
+      [yesterdayDateStr],
       (err, row: any) => {
         if (err) {
           logger.error('[数据库] 获取昨日统计失败:', err.message)
@@ -157,15 +166,11 @@ const mergeYesterdayStats = () => {
           return resolve()
         }
 
-        const yesterday = new Date()
-        yesterday.setDate(yesterday.getDate() - 1)
-        const dateStr = yesterday.toISOString().split('T')[0]
-
         db.run(
-          `INSERT OR REPLACE INTO daily_stats 
+          `INSERT OR REPLACE INTO daily_stats
             (date, count, total_input_size, total_output_size, total_render_time, avg_render_time)
           VALUES (?, ?, ?, ?, ?, ?)`,
-          [dateStr, row.count, row.total_input_size, row.total_output_size, row.total_render_time, Math.round(row.avg_render_time)],
+          [yesterdayDateStr, row.count, row.total_input_size, row.total_output_size, row.total_render_time, Math.round(row.avg_render_time)],
           (insertErr) => {
             if (insertErr) {
               logger.error('[数据库] 插入每日统计失败:', insertErr.message)
@@ -173,13 +178,14 @@ const mergeYesterdayStats = () => {
             }
 
             db.run(
-              `DELETE FROM screenshot_stats WHERE DATE(timestamp) = DATE('now', 'localtime', '-1 day')`,
+              `DELETE FROM screenshot_stats WHERE DATE(timestamp) = ?`,
+              [yesterdayDateStr],
               (deleteErr) => {
                 if (deleteErr) {
                   logger.error('[数据库] 删除昨日数据失败:', deleteErr.message)
                   return reject(deleteErr)
                 }
-                logger.info(`[数据库] 成功合并昨日(${dateStr})统计数据，共${row.count}条记录`)
+                logger.info(`[数据库] 成功合并昨日(${yesterdayDateStr})统计数据，共${row.count}条记录`)
                 resolve()
               }
             )
