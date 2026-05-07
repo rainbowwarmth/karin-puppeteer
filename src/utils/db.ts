@@ -22,6 +22,23 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 })
 
+const getShanghaiDateString = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const getShanghaiDateTimeString = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const seconds = String(date.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+}
+
 function initDB () {
   db.run(`
     CREATE TABLE IF NOT EXISTS screenshot_stats (
@@ -59,9 +76,11 @@ function initDB () {
 
 export const addStats = (inputSize: number, outputSize: number, renderTime: number) => {
   return new Promise<void>((resolve, reject) => {
+    const now = new Date()
+    const dateStr = getShanghaiDateTimeString(now)
     db.run(
-      'INSERT INTO screenshot_stats (input_size, output_size, render_time) VALUES (?, ?, ?)',
-      [inputSize, outputSize, renderTime],
+      'INSERT INTO screenshot_stats (timestamp, input_size, output_size, render_time) VALUES (?, ?, ?, ?)',
+      [dateStr, inputSize, outputSize, renderTime],
       (err) => {
         if (err) {
           logger.error('[数据库] 添加统计失败:', err.message)
@@ -76,7 +95,7 @@ export const addStats = (inputSize: number, outputSize: number, renderTime: numb
 
 export const getTodayStats = () => {
   return new Promise<{ count: number; totalInputSize: number; totalOutputSize: number; totalRenderTime: number; avgRenderTime: number }>((resolve, reject) => {
-    const todayStr = new Date().toISOString().split('T')[0]
+    const todayStr = getShanghaiDateString(new Date())
     db.get(
       `SELECT
         COUNT(*) as count,
@@ -108,7 +127,7 @@ export const getTodayStats = () => {
 export const getAllStats = () => {
   return new Promise<{ count: number; totalInputSize: number; totalOutputSize: number; totalRenderTime: number; avgRenderTime: number }>((resolve, reject) => {
     db.get(
-      `SELECT 
+      `SELECT
         COALESCE(SUM(count), 0) as count,
         COALESCE(SUM(total_input_size), 0) as totalInputSize,
         COALESCE(SUM(total_output_size), 0) as totalOutputSize,
@@ -142,8 +161,7 @@ const mergeYesterdayStats = () => {
     const now = new Date()
     const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
-    yesterday.setHours(0, 0, 0, 0)
-    const yesterdayDateStr = yesterday.toISOString().split('T')[0]
+    const yesterdayDateStr = getShanghaiDateString(yesterday)
 
     db.get(
       `SELECT
@@ -239,19 +257,19 @@ export const getDailyStats = (days: number = 30) => {
 export const getStatsByDate = (date: string) => {
   return new Promise<{ count: number; totalInputSize: number; totalOutputSize: number; totalRenderTime: number; avgRenderTime: number }>((resolve, reject) => {
     db.get(
-      `SELECT 
+      `SELECT
         COALESCE(SUM(count), 0) as count,
         COALESCE(SUM(total_input_size), 0) as totalInputSize,
         COALESCE(SUM(total_output_size), 0) as totalOutputSize,
         COALESCE(SUM(total_render_time), 0) as totalRenderTime,
         COALESCE(AVG(avg_render_time), 0) as avgRenderTime
       FROM (
-        SELECT count, total_input_size, total_output_size, total_render_time, avg_render_time 
-        FROM daily_stats 
+        SELECT count, total_input_size, total_output_size, total_render_time, avg_render_time
+        FROM daily_stats
         WHERE date = ?
         UNION ALL
-        SELECT COUNT(*) as count, SUM(input_size) as total_input_size, SUM(output_size) as total_output_size, SUM(render_time) as total_render_time, AVG(render_time) as avg_render_time 
-        FROM screenshot_stats 
+        SELECT COUNT(*) as count, SUM(input_size) as total_input_size, SUM(output_size) as total_output_size, SUM(render_time) as total_render_time, AVG(render_time) as avg_render_time
+        FROM screenshot_stats
         WHERE DATE(timestamp) = ?
       ) AS combined`,
       [date, date],
